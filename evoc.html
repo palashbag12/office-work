@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculate EVOC - Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .menu-bar {
+            background-color: #333;
+            overflow: hidden;
+        }
+        .menu-bar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+        .menu-bar a:hover {
+            background-color: #575757;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -20%);
+            border: 1px solid #888;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .popup-header h2 {
+            margin: 0;
+        }
+        .popup-header .controls {
+            display: flex;
+            gap: 10px;
+        }
+        .popup-header .controls button {
+            background-color: #ccc;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .popup-header .controls button:hover {
+            background-color: #aaa;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .popup-buttons {
+            text-align: right;
+        }
+        .popup-buttons button {
+            margin-left: 10px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="menu-bar">
+    <a href="#" onclick="openPopup('popupEVOC')">Calculate EVOC</a>
+</div>
+
+<div id="popupEVOC" class="popup">
+    <div class="popup-header">
+        <h2>Calculate EVOC</h2>
+        <div class="controls">
+            <button onclick="minimizePopup('popupEVOC')">_</button>
+            <button onclick="toggleMaximize('popupEVOC')">[]</button>
+            <button onclick="closePopup('popupEVOC')">X</button>
+        </div>
+    </div>
+    <table id="evocTable">
+        <tr>
+            <th contenteditable="true">Item</th>
+            <th contenteditable="true">Quantity</th>
+            <th contenteditable="true">Rate</th>
+            <th contenteditable="true">Amount</th>
+        </tr>
+    </table>
+    <div>
+        <button onclick="addRow()">Add Row</button>
+        <button onclick="removeRow()">Remove Row</button>
+        <button onclick="addColumn()">Add Column</button>
+        <button onclick="removeColumn()">Remove Column</button>
+    </div>
+    <div class="popup-buttons">
+        <button onclick="saveTable()">Save</button>
+        <button onclick="generateExcel()">Generate Excel File</button>
+        <button onclick="generatePdf()">Generate PDF File</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    let savedTableData = [];
+
+    function openPopup(popupId) {
+        const popup = document.getElementById(popupId);
+        popup.style.display = 'block';
+        popup.classList.remove('minimized');
+        popup.style.width = '80%';
+        popup.style.height = 'auto';
+        popup.style.top = '20%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -20%)';
+    }
+
+    function closePopup(popupId) {
+        document.getElementById(popupId).style.display = 'none';
+    }
+
+    function minimizePopup(popupId) {
+        const popup = document.getElementById(popupId);
+        popup.style.height = '50px';
+        popup.style.overflow = 'hidden';
+        popup.classList.add('minimized');
+    }
+
+    function toggleMaximize(popupId) {
+        const popup = document.getElementById(popupId);
+        if (popup.style.width === '100%' && popup.style.height === '100%') {
+            popup.style.width = '80%';
+            popup.style.height = 'auto';
+            popup.style.top = '20%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%, -20%)';
+        } else {
+            popup.style.width = '100%';
+            popup.style.height = '100%';
+            popup.style.top = '0';
+            popup.style.left = '0';
+            popup.style.transform = 'none';
+        }
+    }
+
+    function addRow() {
+        const table = document.getElementById("evocTable");
+        const row = table.insertRow(-1);
+        for (let i = 0; i < table.rows[0].cells.length; i++) {
+            const cell = row.insertCell(i);
+            cell.contentEditable = true;
+        }
+    }
+
+    function removeRow() {
+        const table = document.getElementById("evocTable");
+        if (table.rows.length > 1) {
+            table.deleteRow(-1);
+        }
+    }
+
+    function addColumn() {
+        const table = document.getElementById("evocTable");
+        for (let i = 0; i < table.rows.length; i++) {
+            const cell = table.rows[i].insertCell(-1);
+            cell.contentEditable = true;
+            if (i === 0) {
+                cell.innerHTML = `Column ${table.rows[0].cells.length}`;
+            }
+        }
+    }
+
+    function removeColumn() {
+        const table = document.getElementById("evocTable");
+        if (table.rows[0].cells.length > 1) {
+            for (let i = 0; i < table.rows.length; i++) {
+                table.rows[i].deleteCell(-1);
+            }
+        }
+    }
+
+    function saveTable() {
+        const table = document.getElementById("evocTable");
+        savedTableData = [];
+        for (let i = 0; i < table.rows.length; i++) {
+            const rowData = [];
+            for (let j = 0; j < table.rows[i].cells.length; j++) {
+                rowData.push(table.rows[i].cells[j].innerText);
+            }
+            savedTableData.push(rowData);
+        }
+        alert('Table saved!');
+    }
+
+    function generateExcel() {
+        if (savedTableData.length === 0) {
+            alert('Please save the table first.');
+            return;
+        }
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(savedTableData);
+        XLSX.utils.book_append_sheet(wb, ws, "EVOC");
+        XLSX.writeFile(wb, "EVOC.xlsx");
+    }
+
+    function generatePdf() {
+        if (savedTableData.length === 0) {
+            alert('Please save the table first.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        savedTableData.forEach((row, index) => {
+            doc.text(row.join(' | '), 10, 10 + (index * 10));
+        });
+        doc.save('EVOC.pdf');
+    }
+</script>
+		
+	
+	 <button id="backButton">Go Back</button>
+
+    <!-- JavaScript -->
+   <script>
+        document.getElementById("backButton").onclick = function () {
+            // Replace 'https://example.com' with the URL you want to go back to
+            window.location.href = './index.html';
+        };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Bar with Popups</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .menu-bar {
+            background-color: #333;
+            overflow: hidden;
+        }
+        .menu-bar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+        .menu-bar a:hover {
+            background-color: #575757;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -20%);
+            border: 1px solid #888;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 50%;
+            max-width: 600px;
+            min-width: 300px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .popup-header h2 {
+            margin: 0;
+        }
+        .popup-header .controls {
+            display: flex;
+            gap: 10px;
+        }
+        .popup-header .controls button {
+            background-color: #ccc;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .popup-header .controls button:hover {
+            background-color: #aaa;
+        }
+        .popup input, .popup textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .popup-buttons {
+            text-align: right;
+        }
+        .popup-buttons button {
+            margin-left: 10px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="menu-bar">
+    <a href="#" onclick="openPopup('popup1')">Generate Note Sheet</a>
+  <!--  <a href="#" onclick="openPopup('popup2')">Generate Letters</a>
+    <a href="#" onclick="openPopup('popup3')">Calculate EVOC</a>
+    <a href="#" onclick="openPopup('popup4')">Calculate Base Value of Contract</a>
+    <a href="#" onclick="openPopup('popup5')">Calculate BOQ</a>
+	-->
+</div>
+
+<div id="popup1" class="popup">
+    <div class="popup-header">
+        <h2>Generate Note Sheet</h2>
+        <div class="controls">
+            <button onclick="minimizePopup('popup1')">_</button>
+            <button onclick="toggleMaximize('popup1')">[]</button>
+            <button onclick="closePopup('popup1')">X</button>
+        </div>
+    </div>
+    <label for="efile-ref-no">E. File Ref. No.:</label>
+    <input type="text" id="efile-ref-no" placeholder="Enter E. File Ref. No.">
+    
+    <label for="tender-no">Tender No.:</label>
+    <input type="text" id="tender-no" placeholder="Enter Tender No.">
+    
+    <label for="date">Date:</label>
+    <input type="date" id="date">
+    
+    <label for="subject">Subject:</label>
+    <input type="text" id="subject" placeholder="Enter Subject">
+    
+    <label for="main-body">Main Body:</label>
+    <textarea id="main-body" rows="10" placeholder="Enter Main Body"></textarea>
+    <div class="popup-buttons">
+        <button onclick="resetForm('popup1')">Reset</button>
+        <button onclick="saveDraft('popup1')">Save as Draft</button>
+        <button onclick="saveText('popup1')">Save</button>
+        <button onclick="generateWordFile()">Create Word File</button>
+        <button onclick="generatePdfFile()">Create PDF File</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    let savedNote = {};
+
+    function openPopup(popupId) {
+        const popup = document.getElementById(popupId);
+        popup.style.display = 'block';
+        popup.classList.remove('minimized');
+        popup.style.width = '50%';
+        popup.style.height = 'auto';
+        popup.style.top = '20%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -20%)';
+    }
+
+    function closePopup(popupId) {
+        document.getElementById(popupId).style.display = 'none';
+    }
+
+    function minimizePopup(popupId) {
+        const popup = document.getElementById(popupId);
+        popup.style.height = '50px';
+        popup.style.overflow = 'hidden';
+        popup.classList.add('minimized');
+    }
+
+    function toggleMaximize(popupId) {
+        const popup = document.getElementById(popupId);
+        if (popup.style.width === '100%' && popup.style.height === '100%') {
+            popup.style.width = '50%';
+            popup.style.height = 'auto';
+            popup.style.top = '20%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%, -20%)';
+        } else {
+            popup.style.width = '100%';
+            popup.style.height = '100%';
+            popup.style.top = '0';
+            popup.style.left = '0';
+            popup.style.transform = 'none';
+        }
+    }
+
+    function resetForm(popupId) {
+        document.querySelectorAll(`#${popupId} input, #${popupId} textarea`).forEach(element => {
+            element.value = '';
+        });
+    }
+
+    function saveDraft(popupId) {
+        const subject = document.getElementById('subject').value;
+        const mainBody = document.getElementById('main-body').value;
+        // Code to save as draft (could be to localStorage or a database)
+        alert('Draft saved!');
+    }
+
+       function saveText() {
+        const efileRefNo = document.getElementById('efile-ref-no').value;
+        const tenderNo = document.getElementById('tender-no').value;
+        const date = document.getElementById('date').value;
+        const subject = document.getElementById('subject').value;
+        const mainBody = document.getElementById('main-body').value;
+        
+        savedNote = {
+            efileRefNo: efileRefNo,
+            tenderNo: tenderNo,
+            date: date,
+            subject: subject,
+            mainBody: mainBody
+        };
+        
+        alert('Text saved!');
+    }
+    
+
+    function generateWordFile() {
+        if (!savedNote.subject || !savedNote.mainBody) {
+            alert('Please save the note sheet first.');
+            return;
+        }
+
+        const content = `E. File Ref. No.: ${savedNote.efileRefNo}\n` +
+                        `Tender No.: ${savedNote.tenderNo}\n` +
+                        `Date: ${savedNote.date}\n\n` +
+                        `Subject: ${savedNote.subject}\n\n` +
+                        `${savedNote.mainBody}`;
+        const blob = new Blob([content], { type: 'application/msword' });
+        saveAs(blob, 'NoteSheet.doc');
+    }
+
+    function generatePdfFile() {
+        if (!savedNote.subject || !savedNote.mainBody) {
+            alert('Please save the note sheet first.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text(`E. File Ref. No.: ${savedNote.efileRefNo}`, 10, 10);
+        doc.text(`Tender No.: ${savedNote.tenderNo}`, 10, 20);
+        doc.text(`Date: ${savedNote.date}`, 10, 30);
+        doc.text(`Subject: ${savedNote.subject}`, 10, 40);
+        doc.text(savedNote.mainBody, 10, 50);
+        doc.save('NoteSheet.pdf');
+    }
+</script>
+
+ <button id="backButton">Go Back</button>
+
+    <!-- JavaScript -->
+    <script>
+        document.getElementById("backButton").onclick = function () {
+            // Replace 'https://example.com' with the URL you want to go back to
+            window.location.href = './index.html';
+        };
+    </script>
+</body>
+</html>
